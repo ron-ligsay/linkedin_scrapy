@@ -3,6 +3,7 @@
 ### Notes
 https://www.youtube.com/watch?v=hCARQVJy_mk
 
+https://www.linkedin.com/jobs/search?trk=guest_homepage-basic_guest_nav_menu_jobs
 
 scrapy startproject <project_name>
 

@@ -120,3 +120,14 @@ ROBOTSTXT_OBEY = False
 REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
+
+# Add this setting to your custom_settings
+DOWNLOAD_DELAY = 2  # Adjust the delay as needed to avoid being rate-limited
+
+LOG_LEVEL = 'DEBUG'
+
+#LOG_LEVEL = 'INFO'
+
+LOG_FORMAT = '%(asctime)s [%(name)s] %(levelname)s: %(message)s'
+
+LOG_FILE = 'scrapy1.log'
