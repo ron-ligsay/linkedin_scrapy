@@ -89,11 +89,11 @@ with open(csv_input_link, 'r', encoding='utf-8') as csvfile:
                 
                 #Company_Name = get_text("//a[@class='topcard__org-name-link topcard__flavor--black-link']")
                 Location = get_text("//span[@class='topcard__flavor topcard__flavor--bullet']")
+                Seniority_Level = get_text("(//span[@class='description__job-criteria-text description__job-criteria-text--criteria'])[1]")
+                Employment_Type = get_text("(//span[@class='description__job-criteria-text description__job-criteria-text--criteria'])[2]")
+                Job_Function = get_text("(//span[@class='description__job-criteria-text description__job-criteria-text--criteria'])[3]")
+                Industries = get_text("(//span[@class='description__job-criteria-text description__job-criteria-text--criteria'])[4]")
                 
-                Employment_Type = get_text("(//span[@class='description__job-criteria-text description__job-criteria-text--criteria'])[1]")
-                Job_Function = get_text("(//span[@class='description__job-criteria-text description__job-criteria-text--criteria'])[2]")
-                Industries = get_text("(//span[@class='description__job-criteria-text description__job-criteria-text--criteria'])[3]")
-                Seniority_Level = get_text("(//span[@class='description__job-criteria-text description__job-criteria-text--criteria'])[4]")
                 
                 # click see more
                 driver.find_element(By.XPATH,"//button[@aria-label='Show more, visually expands previously read content above']").click()
@@ -106,49 +106,52 @@ with open(csv_input_link, 'r', encoding='utf-8') as csvfile:
                 # Check if any of the scraped data is empty
                 if None in (Job_Title, Location, Employment_Type, Job_Function, Industries, Seniority_Level): #Company_Name, 
                     # Skip this URL
-                    continue
-                else:
+                    show_report("One or more data points are missing. Skipping this URL...")
                     skipped_count += 1
-
-                # Write data to the CSV file
-                #  ['jobpost_id','Link', 'Job_Title', 'Company_Name', 'Company_link','Date','Keyword','Location', 'Employment_Type', 'Job_Function', 'Industries', 'Seniority_Level','Description']
+                    continue
+                else:        
+                    show_report("Scraping successful!")
+                    # Write data to the CSV file
+                    #  ['jobpost_id','Link', 'Job_Title', 'Company_Name', 'Company_link','Date','Keyword','Location', 'Employment_Type', 'Job_Function', 'Industries', 'Seniority_Level','Description']
+                
                 if save_to_csv:
                     data = {
                         'jobpost_id': success_count+1,
                         'Link': cleaned_url,
                         'Job_Title': Job_Title,
                         'Company_Name': row['company'],
-                        'Company_Link': row['company_link'], # 'Company_Link': Company_Link,
+                        'Company_link': row['company_link'], # 'Company_Link': Company_Link,
                         'Date' : row['date'],
                         'Keyword': row['keyword'], # 'Keyword': Keyword,
                         'Location': Location,
+                        'Seniority_Level': Seniority_Level,
                         'Employment_Type': Employment_Type,
                         'Job_Function': Job_Function,
                         'Industries': Industries,
-                        'Seniority_Level': Seniority_Level,
+                        
                         'Job_Description': Job_Description
                     }
 
                     # Append the data to the DataFrame
                     df = df.append(data, ignore_index=True)
-                success_count += 1
+                    success_count += 1
 
-                # Print for Verification
-                #show_report(Job_Title, " from ", Company_Name)
-                show_report("Job Title: ", Job_Title)
-                show_report("Company Name: ", row['company'])
-                show_report("Date: ", row['date'])
-                show_report("Keyword: ", row['keyword'])
-                show_report("Location: ", Location)
-                show_report("Employment Type: ", Employment_Type)
-                show_report("Job Function: ", Job_Function)
-                show_report("Industries: ", Industries)
-                show_report("Seniority Level: ", Seniority_Level)
-                # print html content with tags
-                show_report(Job_Description)
-                #print("Job Description: ", Job_Description)
+                    # Print for Verification
+                    #show_report(Job_Title, " from ", Company_Name)
+                    show_report("Job Title: ", Job_Title)
+                    show_report("Company Name: ", row['company'])
+                    show_report("Date: ", row['date'])
+                    show_report("Keyword: ", row['keyword'])
+                    show_report("Location: ", Location)
+                    show_report("Employment Type: ", Employment_Type)
+                    show_report("Job Function: ", Job_Function)
+                    show_report("Industries: ", Industries)
+                    show_report("Seniority Level: ", Seniority_Level)
+                    # print html content with tags
+                    show_report(Job_Description)
+                    #print("Job Description: ", Job_Description)
 
-                show_report("-"*50)
+                    show_report("-"*50)
 
         except Exception as e:
             print(f"Error scraping {url}: {str(e)}")
