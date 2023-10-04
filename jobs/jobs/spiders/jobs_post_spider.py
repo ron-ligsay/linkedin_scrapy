@@ -3,6 +3,7 @@ import pandas as pd
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import DNSLookupError, TimeoutError, TCPTimedOutError
 import logging
+from scrapy_splash import SplashRequest
 
 
 class JobsPostSpiderSpider(scrapy.Spider):
@@ -21,7 +22,7 @@ class JobsPostSpiderSpider(scrapy.Spider):
 
 
     def __init__(self, csv_file, *args, **kwargs):
-        super(jobs_post_spider, self).__init__(*args, **kwargs)
+        super(JobsPostSpiderSpider, self).__init__(*args, **kwargs)
         start_url = 'https://ph.linkedin.com/jobs/search?keywords=&location=&geoId=&trk=public_jobs_jobs-search-bar_search-submit&position=1&pageNum=0'
         self.logger = logging.getLogger(__name__)
         self.csv_file = csv_file
@@ -44,21 +45,39 @@ class JobsPostSpiderSpider(scrapy.Spider):
                     }
                 end
                 """
-            yield scrapy.Request(
-                url=url, 
-                callback=self.parse, 
-                meta={'keyword': keyword, 'date': date},#, 'dont_redirect': True
-                dont_filter=True, # import to avoid filtering out the request
+            # yield scrapy.Request(
+            #     url=url, 
+            #     callback=self.parse, 
+            #     meta={'keyword': keyword, 'date': date},#, 'dont_redirect': True
+            #     dont_filter=True, # import to avoid filtering out the request
+            #     endpoint='execute',
+            #     args={
+            #         'lua_source': script,
+            #         #'timeout': 90,
+            #     },
+            #     errback=self.error_handler
+            # )
+            yield SplashRequest(
+                url=url,
+                callback=self.parse,
                 endpoint='execute',
                 args={
                     'lua_source': script,
-                    #'timeout': 90,
+                    'wait': 5,  # Adjust the waiting time as needed
                 },
+                meta={
+                    'keyword': keyword,
+                    'date': date,
+                    # You can add other meta information as needed
+                },
+                dont_filter=True,  # Import to avoid filtering out the request
                 errback=self.error_handler
-                )
+            )
+
 
     def parse(self, response):
         self.logger.info("This is a log message from the parse method.")
+        self.logger.info(f"Scraping page: {response.url}")
         try:
             # check if the response status code is 200 (OK)
             if response.status != 200:

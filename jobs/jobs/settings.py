@@ -123,7 +123,7 @@ FEED_EXPORT_ENCODING = "utf-8"
 
 # Add this setting to your custom_settings
 DOWNLOAD_DELAY = 2  # Adjust the delay as needed to avoid being rate-limited
-
+LOG_ENABLED = True
 LOG_LEVEL = 'DEBUG'
 
 #LOG_LEVEL = 'INFO'
