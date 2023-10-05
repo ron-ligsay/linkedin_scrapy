@@ -15,10 +15,10 @@ logging.basicConfig(filename='scraping.log', level=logging.DEBUG, format='%(asct
 
 # Constants
 desired_language = 'en-US'
-BASE_DIR = 'C:\\Users\\aky\\AppData\\Local\\Programs\\Python\\Python38\\course-u\\src\\linkedin_scrapy\\selenium\\'
-csv_input_link = BASE_DIR + 'jobs1.csv'
-csv_output = BASE_DIR + 'jobs_post_1.csv'
-target_count = 100
+BASE_DIR = 'C:\\Users\\aky\\AppData\\Local\\Programs\\Python\\Python38\\course-u\\src\\linkedin_scrapy\\'
+csv_input_link = BASE_DIR + 'jobs\\jobs_clean_2.csv'
+csv_output = BASE_DIR + 'selenium\\jobs_post_2.csv'
+target_count = 10
 save_to_csv = True
 
 # User agents
@@ -66,6 +66,9 @@ def extract_job_data(job, keyword):
         'date': job.css('time::attr(datetime)').get(),
     }
 
+# Define a threshold for the number of scraped URLs before introducing a sleep
+sleep_threshold = 50  # Adjust this value as needed
+
 # Main scraping function
 def scrape_jobs(url, row):
     driver = webdriver.Chrome(chrome_options=options)
@@ -75,7 +78,7 @@ def scrape_jobs(url, row):
     need_login_count = 0
     has_missing_data_count = 0
     finished_count = 0
-
+    
     df = pd.DataFrame(columns=['jobpost_id', 'Link', 'Job_Title', 'Company_Name', 'Company_link', 'Date',
                                'Keyword', 'Keyword_id', 'Location', 'Employment_Type', 'Job_Function',
                                'Industries', 'Seniority_Level', 'Job_Description'])
@@ -128,7 +131,7 @@ def scrape_jobs(url, row):
                     'Link': cleaned_url,
                     'Job_Title': Job_Title,
                     'Company_Name': row['company'],
-                    'Company_link': row['company_link'],
+                    'Company_link': clean_link(row['company_link']),
                     'Date': row['date'],
                     'Keyword': row['keyword'],
                     'Keyword_id': keyword_id_mapping[row['keyword']],
@@ -169,6 +172,12 @@ def scrape_jobs(url, row):
         if total_count == target_count:
             logging.info("Target count reached. Exiting...")
             break
+
+        # Introduce a sleep if the threshold is reached
+        if finished_count % sleep_threshold == 0:
+            sleep_duration = random.randint(180, 300)  # Sleep for 3-5 minutes
+            logging.info("Reached the sleep threshold. Sleeping for %s seconds...", sleep_duration)
+            time.sleep(sleep_duration)
 
     driver.quit()
 
