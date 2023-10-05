@@ -16,6 +16,7 @@ class JobsSpiderSpider(scrapy.Spider):
 
     start_urls = ["https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?location=Philippines&keywords=" + str(keyword) for keyword in keywords ]
 
+
     def start_requests(self):
         for location in self.location:
             for keyword in self.keywords:
@@ -33,11 +34,11 @@ class JobsSpiderSpider(scrapy.Spider):
         keyword = response.meta['keyword']
         page = response.meta['page']
 
-
         jobs = response.css('div.job-search-card')
 
         for job in jobs:
             item = {
+                
                 'link' : job.css('a.base-card__full-link ::attr(href)').get(),
                 'keyword' : response.meta['keyword'], 
                 'title' : job.css('h3::text').get().strip(),
@@ -56,6 +57,16 @@ class JobsSpiderSpider(scrapy.Spider):
 
         pass
 
+    def clean_link(self, link):
+        if link:
+            # Split the link by '&' and get the first part
+            parts = link.split('&')
+            if parts:
+                first_part = parts[0]
+                # Remove 'ph.' from the first part
+                cleaned_link = first_part.replace('ph.', '')
+                return cleaned_link
+        return None
 
     def log_to_file(self, message):
         with open('log.txt', 'a') as f:
