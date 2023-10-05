@@ -66,6 +66,15 @@ finished_count = 0
 
 save_to_csv = True
 
+ # Define a dictionary to map keywords to IDs
+keyword_id_mapping = {
+    "software development": 1,
+    "data and analytics": 2,
+    "design and ui/ux": 3,
+    "testing and quality assurance": 4,
+    "networking and infrastructure": 5
+}
+
 
 # get text by xpath
 def get_text(xpath):
@@ -85,7 +94,7 @@ def show_report(message, data=None):
         logging.info(message, data)
 
 # Create the CSV file and write the header row
-fieldnames = ['jobpost_id','Link', 'Job_Title', 'Company_Name', 'Company_link','Date','Keyword','Location', 'Employment_Type', 'Job_Function', 'Industries', 'Seniority_Level','Job_Description']
+fieldnames = ['jobpost_id','Link', 'Job_Title', 'Company_Name', 'Company_link','Date','Keyword','Keyword_id','Location', 'Employment_Type', 'Job_Function', 'Industries', 'Seniority_Level','Job_Description']
 df = pd.DataFrame(columns=fieldnames)
 
 # include column in csv_input_link
@@ -180,6 +189,7 @@ with open(csv_input_link, 'r', encoding='utf-8') as csvfile:
                             'Company_link': row['company_link'], # 'Company_Link': Company_Link,
                             'Date' : row['date'],
                             'Keyword': row['keyword'], # 'Keyword': Keyword,
+                            'Keyword_id': keyword_id_mapping[row['keyword']], # 'Keyword_id': Keyword_id,
                             'Location': Location,
                             'Seniority_Level': Seniority_Level,
                             'Employment_Type': Employment_Type,
