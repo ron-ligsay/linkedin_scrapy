@@ -59,7 +59,7 @@ class JobsApiSpider(scrapy.Spider):
             'keyword': keyword,
             'title': job.css('h3::text').get().strip(),
             'company': job.css('a.hidden-nested-link::text').get().strip(),
-            'company_link': job.css('a.hidden-nested-link::attr(href)').get(),
+            'company_link': self.clean_link(job.css('a.hidden-nested-link::attr(href)').get()),
             'date': job.css('time::attr(datetime)').get(),
         }
 
