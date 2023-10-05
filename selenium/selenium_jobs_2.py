@@ -18,8 +18,24 @@ desired_language = 'en-US'
 BASE_DIR = 'C:\\Users\\aky\\AppData\\Local\\Programs\\Python\\Python38\\course-u\\src\\linkedin_scrapy\\'
 csv_input_link = BASE_DIR + 'jobs\\jobs_clean_2.csv'
 csv_output = BASE_DIR + 'selenium\\jobs_post_2.csv'
+max_requests = 100
 target_count = 10
+max_retries = 2
 save_to_csv = True
+max_element_wait = 3
+min_rest = 60 # 3 minutes
+max_rest = 120 # 5 minutes
+
+
+success_count = 0
+skipped_count = 0
+need_login_count = 0
+has_missing_data_count = 0
+timeout_error_count = 0
+exception_error_count = 0
+finished_count = 0
+total_count = 0
+
 
 # User agents
 user_agents = [
@@ -33,6 +49,8 @@ user_agents = [
 # Create Chrome options
 options = webdriver.ChromeOptions()
 options.add_argument('--lang={}'.format(desired_language))
+
+scraped_urls = set()
 
 # Function to get a random user agent
 def get_random_user_agent():
@@ -55,6 +73,13 @@ def get_text(xpath):
     except:
         return None
 
+def show_report(message, display=True, log=False):
+    if display:
+        print(message)
+    if log:
+        logging.info(message)
+
+
 # Function to extract job data
 def extract_job_data(job, keyword):
     return {
@@ -70,38 +95,34 @@ def extract_job_data(job, keyword):
 sleep_threshold = 50  # Adjust this value as needed
 
 # Main scraping function
-def scrape_jobs(url, row):
-    driver = webdriver.Chrome(chrome_options=options)
-    scraped_urls = set()
-    success_count = 0
-    skipped_count = 0
-    need_login_count = 0
-    has_missing_data_count = 0
-    finished_count = 0
-    
-    df = pd.DataFrame(columns=['jobpost_id', 'Link', 'Job_Title', 'Company_Name', 'Company_link', 'Date',
-                               'Keyword', 'Keyword_id', 'Location', 'Employment_Type', 'Job_Function',
-                               'Industries', 'Seniority_Level', 'Job_Description'])
+def scrape_jobs(url, row, driver):
+    global success_count 
+    global skipped_count 
+    global need_login_count 
+    global has_missing_data_count 
+    global timeout_error_count 
+    global exception_error_count 
+    global finished_count
+    global total_count
+    global df
 
-    total_count = 0
+    retry_count = 0
 
-    while total_count < target_count:
+    while retry_count < max_retries:
         url = row['link']
         total_count += 1
-        max_retries = 2
-        retry_count = 0
+        
+        show_report(f"{success_count} ({finished_count}) out of {target_count} URLs scraped, from {total_count} URLs")
+        show_report(f"Trying to scrape Job Title: {row['title']} from Company: {row['company']}")
+        show_report(f"On Retry {retry_count + 1} out of {max_retries + 1}")
+        #url = clean_link(url)
 
-        selected_user_agent = get_random_user_agent()
-        options.add_argument(f"user-agent={selected_user_agent}")
-
-        cleaned_url = clean_link(url)
-
-        if cleaned_url not in scraped_urls:
+        if url not in scraped_urls:
             try:
-                driver.get(cleaned_url)
+                driver.get(url)
                 isLogin = get_text("//h1")
                 if isLogin == 'Join LinkedIn':
-                    logging.info("Sign in required. Skipping this URL...")
+                    show_report("Sign in required. Skipping this URL...")
                     skipped_count += 1
                     need_login_count += 1
                     retry_count = max_retries
@@ -118,17 +139,20 @@ def scrape_jobs(url, row):
                 Job_Description = driver.find_element(By.XPATH, "//div[@class='show-more-less-html__markup relative overflow-hidden']").get_attribute('innerHTML')
 
                 if None in (Job_Title, Location, Employment_Type, Job_Function, Industries, Seniority_Level):
-                    logging.info("One or more data points are missing. Skipping this URL...")
+                    show_report("One or more data points are missing. Skipping this URL...")
                     skipped_count += 1
                     retry_count = max_retries
                     has_missing_data_count += 1
+                    for data in (Job_Title, Location, Employment_Type, Job_Function, Industries, Seniority_Level):
+                            if data is None:
+                                show_report(f"{data} is missing")
                     continue
                 else:
-                    logging.info("Scraping successful!")
+                    show_report("Scraping successful!")
 
                 data = {
                     'jobpost_id': success_count + 1,
-                    'Link': cleaned_url,
+                    'Link': url,
                     'Job_Title': Job_Title,
                     'Company_Name': row['company'],
                     'Company_link': clean_link(row['company_link']),
@@ -146,51 +170,43 @@ def scrape_jobs(url, row):
                 df = df.append(data, ignore_index=True)
                 success_count += 1
 
-                logging.info("Job Title: %s", Job_Title)
-                logging.info("Company Name: %s", row['company'])
-                logging.info("Date: %s", row['date'])
-                logging.info("Keyword: %s", row['keyword'])
-                logging.info("Location: %s", Location)
-                logging.info("Employment Type: %s", Employment_Type)
-                logging.info("Job Function: %s", Job_Function)
-                logging.info("Industries: %s", Industries)
-                logging.info("Seniority Level: %s", Seniority_Level)
+                show_report("Job Title: %s", Job_Title)
+                show_report("Company Name: %s", row['company'])
+                show_report("Date: %s", row['date'])
+                show_report("Keyword: %s", row['keyword'])
+                show_report("Location: %s", Location)
+                show_report("Employment Type: %s", Employment_Type)
+                show_report("Job Function: %s", Job_Function)
+                show_report("Industries: %s", Industries)
+                show_report("Seniority Level: %s", Seniority_Level)
 
-                logging.info(Job_Description)
-                logging.info("-" * 50)
+                show_report(Job_Description)
+                show_report("-" * 50)
 
             except TimeoutException:
                 retry_count += 1
-                logging.info("TimeoutException scraping %s", url)
+                timeout_error_count += 1
+                show_report("TimeoutException scraping %s", url)
             except Exception as e:
-                logging.info("Error scraping %s: %s", url, str(e))
+                retry_count += 1
+                exception_error_count += 1
+                show_report("Error scraping %s: %s", url, str(e))
+        
+        else:
+            show_report("URL already scraped. Skipping...")
+            retry_count = max_retries
+            continue
 
-        scraped_urls.add(cleaned_url)
+        scraped_urls.add(url)
         finished_count += 1
-        time.sleep(random.randint(1, 5))
+        time.sleep(random.randint(1, 3)) # Sleep for 1-5 seconds
 
         if total_count == target_count:
-            logging.info("Target count reached. Exiting...")
+            show_report("Target count reached. Exiting...")
             break
+        
 
-        # Introduce a sleep if the threshold is reached
-        if finished_count % sleep_threshold == 0:
-            sleep_duration = random.randint(180, 300)  # Sleep for 3-5 minutes
-            logging.info("Reached the sleep threshold. Sleeping for %s seconds...", sleep_duration)
-            time.sleep(sleep_duration)
 
-    driver.quit()
-
-    if save_to_csv:
-        df.to_csv(csv_output, index=False, encoding='utf-8')
-
-    print(f"Total URLs: {total_count} out of {target_count}")
-    print(f"Scraped URLs: {success_count} out of {target_count}")
-    print(f"Skipped URLs: {skipped_count} out of {target_count}")
-    print(f"Need Login URLs: {need_login_count} out of {skipped_count} skipped")
-    print(f"Missing Data URLs: {has_missing_data_count} out of {skipped_count} skipped")
-    print(f"Finished URLs: {finished_count} out of {target_count}")
-    print("Done!")
 
 # Initialize the web driver (make sure the driver executable is in your PATH)
 driver = webdriver.Chrome(chrome_options=options)
@@ -208,5 +224,43 @@ keyword_id_mapping = {
 with open(csv_input_link, 'r', encoding='utf-8') as csvfile:
     csvreader = csv.DictReader(csvfile)
 
+    df = pd.DataFrame(columns=['jobpost_id', 'Link', 'Job_Title', 'Company_Name', 'Company_link', 'Date',
+                               'Keyword', 'Keyword_id', 'Location', 'Employment_Type', 'Job_Function',
+                               'Industries', 'Seniority_Level', 'Job_Description'])
+
+    driver = webdriver.Chrome(chrome_options=options)
     for row in csvreader:
-        scrape_jobs(row['link'], row)
+        if finished_count >= target_count:
+            show_report("Target count reached. Exiting...")
+            break
+
+        show_report("Inside for loop")
+        # Introduce a sleep if the threshold is reached
+        if total_count != 0 and total_count % sleep_threshold == 0:
+            sleep_duration = random.randint(min_rest, max_rest)  # Sleep for 3-5 minutes
+            show_report(f"Reached the sleep threshold. Sleeping for {sleep_duration} seconds...")
+            time.sleep(sleep_duration)
+            selected_user_agent = get_random_user_agent()
+            options.add_argument(f"user-agent={selected_user_agent}")
+            show_report("Switching User agent: %s", selected_user_agent)
+            driver = webdriver.Chrome(chrome_options=options)
+
+        show_report(f"Scraping URL: {row['link']}")
+        scrape_jobs(row['link'], row, driver)
+
+    driver.quit()
+
+    if save_to_csv:
+        show_report("Saving to CSV...")
+        df.to_csv(csv_output, index=False, encoding='utf-8')
+        show_report("Successfully saved to CSV!")
+
+    print(f"Total URLs: {total_count} out of {target_count}")
+    print(f"Scraped URLs: {success_count} out of {target_count}")
+    print(f"Skipped URLs: {skipped_count} out of {target_count}")
+    print(f"Need Login URLs: {need_login_count} out of {skipped_count} skipped")
+    print(f"Missing Data URLs: {has_missing_data_count} out of {skipped_count} skipped")
+    print(f"Timeout Errors: {timeout_error_count} out of {target_count}")
+    print(f"Exception Errors: {exception_error_count} out of {target_count}")
+    print(f"Finished URLs: {finished_count} out of {target_count}")
+    print("Done!")
