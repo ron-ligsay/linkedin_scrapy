@@ -44,7 +44,7 @@ class JobsApiSpider(scrapy.Spider):
             yield item
 
             log_message = self.format_log_message(item)
-            self.log(log_message)
+            self.log_to_file(log_message)
 
         log_message = self.format_page_log_message(location, keyword, page, response.url)
         self.log_to_file(log_message)
