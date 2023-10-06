@@ -88,7 +88,7 @@ def extract_job_data(job, keyword):
         'title': job.css('h3::text').get().strip(),
         'company': job.css('a.hidden-nested-link::text').get().strip(),
         'company_link': job.css('a.hidden-nested-link::attr(href)').get(),
-        'date': job.css('time::attr(datetime)').get(),
+        'date_posted': job.css('time::attr(datetime)').get(),
     }
 
 # Define a threshold for the number of scraped URLs before introducing a sleep
@@ -151,20 +151,20 @@ def scrape_jobs(url, row, driver):
                     show_report("Scraping successful!")
 
                 data = {
-                    'jobpost_id': success_count + 1,
-                    'Link': url,
-                    'Job_Title': Job_Title,
-                    'Company_Name': row['company'],
-                    'Company_link': clean_link(row['company_link']),
-                    'Date': row['date'],
-                    'Keyword': row['keyword'],
-                    'Keyword_id': keyword_id_mapping[row['keyword']],
-                    'Location': Location,
-                    'Seniority_Level': Seniority_Level,
-                    'Employment_Type': Employment_Type,
-                    'Job_Function': Job_Function,
-                    'Industries': Industries,
-                    'Job_Description': Job_Description
+                    'id': success_count + 1,
+                    'Llink': url,
+                    'job_title': Job_Title,
+                    'company_name': row['company'],
+                    'company_link': clean_link(row['company_link']),
+                    'date_link': row['date'],
+                    'keyword': row['keyword'],
+                    'keyword_id': keyword_id_mapping[row['keyword']],
+                    'location': Location,
+                    'seniority_level': Seniority_Level,
+                    'employment_type': Employment_Type,
+                    'job_function': Job_Function,
+                    'industries': Industries,
+                    'job_description': Job_Description
                 }
 
                 df = df.append(data, ignore_index=True)
@@ -224,9 +224,9 @@ keyword_id_mapping = {
 with open(csv_input_link, 'r', encoding='utf-8') as csvfile:
     csvreader = csv.DictReader(csvfile)
 
-    df = pd.DataFrame(columns=['jobpost_id', 'Link', 'Job_Title', 'Company_Name', 'Company_link', 'Date',
-                               'Keyword', 'Keyword_id', 'Location', 'Employment_Type', 'Job_Function',
-                               'Industries', 'Seniority_Level', 'Job_Description'])
+    df = pd.DataFrame(columns=['id', 'link', 'job_title', 'company_name', 'company_link', 'date_posted',
+                               'keyword', 'keyword_id', 'location', 'employment_type', 'job_function',
+                               'industries', 'seniority_Level', 'job_Description'])
 
     driver = webdriver.Chrome(chrome_options=options)
     for row in csvreader:
