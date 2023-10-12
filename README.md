@@ -9,9 +9,7 @@ pip install -U prompt-toolkit
 
 
 Qt Installer
+- (https://www.qt.io/download-qt-installer)[]
 
-https://www.qt.io/download-qt-installer
-
-
-
-https://www.youtube.com/watch?v=hCARQVJy_mk
+##### Guides
+- (https://www.youtube.com/watch?v=hCARQVJy_mk)[]
