@@ -16,8 +16,8 @@ logging.basicConfig(filename='scraping.log', level=logging.DEBUG, format='%(asct
 # Constants
 desired_language = 'en-US'
 BASE_DIR = 'C:\\Users\\aky\\AppData\\Local\\Programs\\Python\\Python38\\course-u\\src\\linkedin_scrapy\\'
-csv_input_link = BASE_DIR + 'jobs\\jobs_clean_2.csv'
-csv_output = BASE_DIR + 'selenium\\jobs_post_2.csv'
+csv_input_link = BASE_DIR + 'jobs\\jobs3.csv'
+csv_output = BASE_DIR + 'selenium\\jobs_post_3.csv'
 max_requests = 100
 target_count = 10
 max_retries = 2
