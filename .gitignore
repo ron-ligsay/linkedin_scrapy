@@ -1,0 +1,17 @@
+# add ignore for scrapy
+*/scrapy.cfg
+
+*/logs/*
+*.logs
+*.log
+*/.scrapy/*
+*/log.txt
+
+*.csv
+
+*.exe
+
+*.pyc
+
+# what command to delete push .exe files in github
+#git rm -r --cached *.exe 
